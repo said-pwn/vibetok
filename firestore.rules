@@ -1,18 +1,67 @@
-rules_version='2'
-
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Правила для пользователей
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Правила для видео
+    match /videos/{videoId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Правила для комментариев
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Правила для уведомлений
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Правила для историй
+    match /stories/{storyId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Правила для плейлистов
+    match /playlists/{playlistId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Правила для разговоров
+    match /conversations/{conversationId} {
+      allow read: if request.auth != null && resource.data.participants.hasAny([request.auth.uid]);
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && resource.data.participants.hasAny([request.auth.uid]);
+    }
+    
+    // Правила для сообщений
+    match /messages/{messageId} {
+      allow read: if request.auth != null && resource.data.participants.hasAny([request.auth.uid]);
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && resource.data.senderId == request.auth.uid;
+    }
+    
+    // Для разработки - разрешить все остальное (удалите в продакшене!)
     match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2025, 7, 12);
+      allow read: if true;
+      allow write: if request.auth != null;
     }
   }
 }
+
