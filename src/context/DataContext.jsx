@@ -15,9 +15,14 @@ import {
   increment,
   serverTimestamp
 } from 'firebase/firestore'
+<<<<<<< HEAD
 import { db } from '../config/firebase'
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { storage } from '../config/firebase'
+=======
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { db, storage } from '../config/firebase'
+>>>>>>> 8166a8e3144e2c6c65b445f31c219835f7dc834b
 
 const DataContext = createContext()
 
@@ -34,12 +39,10 @@ export function DataProvider({ children }) {
   const [playlists, setPlaylists] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Загрузка данных из Firestore
   useEffect(() => {
     let unsubscribeVideos, unsubscribeUsers, unsubscribeComments, unsubscribeNotifications, unsubscribeStories, unsubscribePlaylists
 
     try {
-      // Видео - с обработкой ошибок если нет индекса
       unsubscribeVideos = onSnapshot(
         query(collection(db, 'videos'), orderBy('timestamp', 'desc')),
         (snapshot) => {
@@ -48,7 +51,6 @@ export function DataProvider({ children }) {
         },
         (error) => {
           console.error('Ошибка загрузки видео:', error)
-          // Если ошибка из-за отсутствия индекса, загружаем без сортировки
           if (error.code === 'failed-precondition') {
             unsubscribeVideos = onSnapshot(
               collection(db, 'videos'),
@@ -88,7 +90,6 @@ export function DataProvider({ children }) {
         },
         (error) => {
           console.error('Ошибка загрузки комментариев:', error)
-          // Fallback без сортировки
           if (error.code === 'failed-precondition') {
             unsubscribeComments = onSnapshot(
               collection(db, 'comments'),
@@ -111,7 +112,6 @@ export function DataProvider({ children }) {
         },
         (error) => {
           console.error('Ошибка загрузки уведомлений:', error)
-          // Fallback без сортировки
           if (error.code === 'failed-precondition') {
             unsubscribeNotifications = onSnapshot(
               collection(db, 'notifications'),
@@ -169,6 +169,7 @@ export function DataProvider({ children }) {
     }
   }, [])
 
+<<<<<<< HEAD
   // Создание записи видео в Firestore с загрузкой файла в Firebase Storage
   const addVideo = async (videoFile, caption, hashtags, userId, username, userAvatar) => {
     try {
@@ -242,6 +243,55 @@ export function DataProvider({ children }) {
           return { success: false, error: uploadError.message || fallbackErr.message }
         }
       }
+=======
+  const addVideo = async (videoFile, caption, hashtags, userId, username, userAvatar) => {
+    try {
+      const storageRef = ref(storage, `videos/${userId}/${Date.now()}_${videoFile.name}`)
+      const uploadTask = uploadBytesResumable(storageRef, videoFile)
+
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            // Optional: track progress
+          },
+          (error) => {
+            console.error("Upload failed:", error)
+            reject({ success: false, error: error.message })
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+            
+            const hashtagArray = hashtags
+              .split(' ')
+              .filter(tag => tag.trim().startsWith('#'))
+              .map(tag => tag.trim().substring(1))
+              .filter(tag => tag.length > 0)
+
+            const videoData = {
+              userId,
+              username,
+              userAvatar,
+              url: downloadURL,
+              fileName: videoFile.name,
+              fileSize: videoFile.size,
+              fileType: videoFile.type,
+              caption: caption || 'Без описания',
+              hashtags: hashtagArray,
+              likes: [],
+              comments: [],
+              reposts: [],
+              views: 0,
+              timestamp: serverTimestamp(),
+              createdAt: new Date().toISOString()
+            }
+
+            const docRef = await addDoc(collection(db, 'videos'), videoData)
+            resolve({ success: true, id: docRef.id })
+          }
+        )
+      })
+>>>>>>> 8166a8e3144e2c6c65b445f31c219835f7dc834b
     } catch (error) {
       console.error('Ошибка создания видео (upload):', error)
       return { success: false, error: error.message }
@@ -280,7 +330,6 @@ export function DataProvider({ children }) {
 
       const docRef = await addDoc(collection(db, 'comments'), commentData)
       
-      // Добавить уведомление
       const video = videos.find(v => v.id === videoId)
       if (video && video.userId !== userId) {
         await addNotification(
@@ -313,7 +362,6 @@ export function DataProvider({ children }) {
           likes: arrayUnion(userId)
         })
 
-        // Добавить уведомление
         if (video.userId !== userId) {
           const currentUser = users.find(u => u.id === userId)
           try {
@@ -325,7 +373,6 @@ export function DataProvider({ children }) {
             )
           } catch (notifError) {
             console.error('Ошибка добавления уведомления:', notifError)
-            // Не прерываем операцию из-за ошибки уведомления
           }
         }
       }
@@ -382,7 +429,6 @@ export function DataProvider({ children }) {
           following: arrayUnion(targetUserId)
         })
 
-        // Добавить уведомление
         const currentUserData = users.find(u => u.id === currentUserId)
         await addNotification(
           targetUserId,
@@ -471,32 +517,44 @@ export function DataProvider({ children }) {
     }
   }
 
-  // Добавить историю (Story) - без Storage
   const addStory = async (mediaFile, userId, username, userAvatar) => {
     try {
-      // Создаем локальный URL для медиа (без загрузки в Storage)
-      const mediaUrl = URL.createObjectURL(mediaFile)
+      const storageRef = ref(storage, `stories/${userId}/${Date.now()}_${mediaFile.name}`)
+      const uploadTask = uploadBytesResumable(storageRef, mediaFile)
 
-      const storyData = {
-        userId,
-        username,
-        userAvatar,
-        mediaUrl,
-        mediaType: mediaFile.type.startsWith('video/') ? 'video' : 'image',
-        views: [],
-        timestamp: serverTimestamp(),
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 часа
-      }
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {},
+          (error) => {
+            console.error("Upload failed:", error)
+            reject({ success: false, error: error.message })
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
 
-      const docRef = await addDoc(collection(db, 'stories'), storyData)
-      return { success: true, id: docRef.id }
+            const storyData = {
+              userId,
+              username,
+              userAvatar,
+              mediaUrl: downloadURL,
+              mediaType: mediaFile.type.startsWith('video/') ? 'video' : 'image',
+              views: [],
+              timestamp: serverTimestamp(),
+              createdAt: new Date().toISOString(),
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            }
+
+            const docRef = await addDoc(collection(db, 'stories'), storyData)
+            resolve({ success: true, id: docRef.id })
+          }
+        )
+      })
     } catch (error) {
       return { success: false, error: error.message }
     }
   }
 
-  // Создать плейлист
   const createPlaylist = async (name, userId, description = '') => {
     try {
       const playlistData = {
@@ -542,7 +600,6 @@ export function DataProvider({ children }) {
     )
   }
 
-  // Реакции на комментарии
   const toggleCommentReaction = async (commentId, userId, reactionType) => {
     try {
       const comment = comments.find(c => c.id === commentId)
@@ -568,7 +625,6 @@ export function DataProvider({ children }) {
     }
   }
 
-  // Блокировка пользователя
   const blockUser = async (userId, blockedUserId) => {
     try {
       const user = users.find(u => u.id === userId)
@@ -591,7 +647,6 @@ export function DataProvider({ children }) {
     }
   }
 
-  // Получить статистику видео
   const getVideoStats = (videoId) => {
     const video = videos.find(v => v.id === videoId)
     if (!video) return null
