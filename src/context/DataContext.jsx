@@ -16,6 +16,8 @@ import {
   serverTimestamp
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { storage } from '../config/firebase'
 
 const DataContext = createContext()
 
@@ -167,41 +169,81 @@ export function DataProvider({ children }) {
     }
   }, [])
 
-  // Создание записи видео в Firestore (без Storage - используем локальный URL)
+  // Создание записи видео в Firestore с загрузкой файла в Firebase Storage
   const addVideo = async (videoFile, caption, hashtags, userId, username, userAvatar) => {
     try {
-      // Создаем локальный URL для видео (без загрузки в Storage)
-      const videoUrl = URL.createObjectURL(videoFile)
-
-      // Создание записи в Firestore
-      const hashtagArray = hashtags
+      // Подготовить хештеги
+      const hashtagArray = (hashtags || '')
         .split(' ')
         .filter(tag => tag.trim().startsWith('#'))
         .map(tag => tag.trim().substring(1))
         .filter(tag => tag.length > 0)
 
-      const videoData = {
-        userId,
-        username,
-        userAvatar,
-        url: videoUrl,
-        fileName: videoFile.name,
-        fileSize: videoFile.size,
-        fileType: videoFile.type,
-        caption: caption || 'Без описания',
-        hashtags: hashtagArray,
-        likes: [],
-        comments: [],
-        reposts: [],
-        views: 0,
-        timestamp: serverTimestamp(),
-        createdAt: new Date().toISOString()
-      }
+      try {
+        // Создать путь хранения и загрузить файл
+        const storagePath = `videos/${userId}/${Date.now()}_${videoFile.name}`
+        const fileRef = storageRef(storage, storagePath)
+        const uploadTask = uploadBytesResumable(fileRef, videoFile)
 
-      const docRef = await addDoc(collection(db, 'videos'), videoData)
-      return { success: true, id: docRef.id }
+        // Wait for upload to complete
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed', null, (err) => reject(err), () => resolve())
+        })
+
+        // Получить публичный URL
+        const downloadURL = await getDownloadURL(fileRef)
+
+        const videoData = {
+          userId,
+          username,
+          userAvatar,
+          url: downloadURL,
+          fileName: videoFile.name,
+          fileSize: videoFile.size,
+          fileType: videoFile.type,
+          caption: caption || 'Без описания',
+          hashtags: hashtagArray,
+          likes: [],
+          comments: [],
+          reposts: [],
+          views: 0,
+          timestamp: serverTimestamp(),
+          createdAt: new Date().toISOString()
+        }
+
+        const docRef = await addDoc(collection(db, 'videos'), videoData)
+        return { success: true, id: docRef.id }
+      } catch (uploadError) {
+        console.error('Ошибка загрузки в Storage, использую временный локальный URL:', uploadError)
+        // Fallback: создаём локальный URL, чтобы автор сразу увидел своё видео (не будет доступно после перезагрузки)
+        try {
+          const fallbackUrl = URL.createObjectURL(videoFile)
+          const videoData = {
+            userId,
+            username,
+            userAvatar,
+            url: fallbackUrl,
+            fileName: videoFile.name,
+            fileSize: videoFile.size,
+            fileType: videoFile.type,
+            caption: caption || 'Без описания',
+            hashtags: hashtagArray,
+            likes: [],
+            comments: [],
+            reposts: [],
+            views: 0,
+            timestamp: serverTimestamp(),
+            createdAt: new Date().toISOString()
+          }
+          const docRef = await addDoc(collection(db, 'videos'), videoData)
+          return { success: true, id: docRef.id, warning: 'uploaded-fallback', error: uploadError.message }
+        } catch (fallbackErr) {
+          console.error('Fallback сохранение провалилось:', fallbackErr)
+          return { success: false, error: uploadError.message || fallbackErr.message }
+        }
+      }
     } catch (error) {
-      console.error('Ошибка создания видео:', error)
+      console.error('Ошибка создания видео (upload):', error)
       return { success: false, error: error.message }
     }
   }

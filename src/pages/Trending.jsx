@@ -178,6 +178,8 @@ export default function Trending() {
                             src={video.url}
                             className="w-24 h-32 object-cover rounded-lg"
                             muted
+                            playsInline
+                            loop
                           />
                         </div>
                       </div>

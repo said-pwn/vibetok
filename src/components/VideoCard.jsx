@@ -101,32 +101,45 @@ export default function VideoCard({ video, user, isActive }) {
 
   if (!video || !user) return null
 
+  const togglePlay = () => {
+    if (!videoRef.current) return
+    if (videoRef.current.paused) {
+      videoRef.current.play().catch(() => {})
+    } else {
+      videoRef.current.pause()
+    }
+  }
+
   return (
-    <div className="relative w-full max-w-md mx-auto h-full flex items-center">
+    <div className="relative w-full h-full flex items-center">
       <div className="relative w-full aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl shadow-pink-500/20">
         <video
           ref={videoRef}
           src={video.url}
-          className="w-full h-full object-cover"
+          poster={video.thumbnail || user?.avatar}
+          className="w-full h-full object-cover cursor-pointer"
           loop
           muted
           playsInline
+          autoPlay
+          controls
+          onClick={togglePlay}
         />
 
         {/* Video Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
           <div className="flex items-start gap-3 mb-3">
-            <Link to={`/profile/${user.id}`} className="hover:scale-110 transition-smooth">
+              <Link to={`/profile/${user.id}`} className="hover:scale-110 transition-smooth">
               <img
                 src={user.avatar}
                 alt={user.username}
-                className="w-12 h-12 rounded-full border-2 border-pink-500 shadow-lg"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-pink-500 shadow-lg"
               />
             </Link>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Link to={`/profile/${user.id}`} className="hover:opacity-80 transition-smooth">
-                  <span className="font-bold text-white text-base">@{user.username}</span>
+                  <Link to={`/profile/${user.id}`} className="hover:opacity-80 transition-smooth">
+                  <span className="font-bold text-white text-sm md:text-base">@{user.username}</span>
                 </Link>
                 {user.id !== userData?.id && (
                   <button
@@ -141,7 +154,7 @@ export default function VideoCard({ video, user, isActive }) {
                   </button>
                 )}
               </div>
-              <p className="text-white text-sm mb-2 leading-relaxed">{video.caption}</p>
+              <p className="text-white text-xs md:text-sm mb-2 leading-relaxed">{video.caption}</p>
               {video.hashtags && video.hashtags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {video.hashtags.map((tag, idx) => (
@@ -165,12 +178,12 @@ export default function VideoCard({ video, user, isActive }) {
         </div>
 
         {/* Action Buttons */}
-        <div className="absolute right-4 bottom-24 flex flex-col gap-5">
+  <div className="absolute right-3 bottom-24 flex flex-col gap-4 sm:gap-5">
           <button
             onClick={handleLike}
             className="flex flex-col items-center gap-1 group"
           >
-            <div className={`p-3.5 rounded-full transition-smooth shadow-lg ${
+            <div className={`p-3 rounded-full sm:p-3.5 rounded-full transition-smooth shadow-lg ${
               isLiked 
                 ? 'bg-gradient-to-br from-pink-500 to-pink-600 scale-110 animate-bounce-custom' 
                 : 'bg-black/60 backdrop-blur-sm group-hover:bg-pink-500/30'
@@ -190,7 +203,7 @@ export default function VideoCard({ video, user, isActive }) {
             onClick={() => setShowComments(!showComments)}
             className="flex flex-col items-center gap-1 group"
           >
-            <div className="p-3.5 rounded-full bg-black/60 backdrop-blur-sm group-hover:bg-blue-500/30 transition-smooth shadow-lg">
+            <div className="p-3 rounded-full sm:p-3.5 rounded-full bg-black/60 backdrop-blur-sm group-hover:bg-blue-500/30 transition-smooth shadow-lg">
               <MessageCircle className="w-7 h-7 text-white group-hover:text-blue-400 transition-smooth" />
             </div>
             <span className="text-white text-xs font-bold drop-shadow-lg">
@@ -202,7 +215,7 @@ export default function VideoCard({ video, user, isActive }) {
             onClick={handleFavorite}
             className="flex flex-col items-center gap-1 group"
           >
-            <div className={`p-3.5 rounded-full transition-smooth shadow-lg ${
+            <div className={`p-3 rounded-full sm:p-3.5 rounded-full transition-smooth shadow-lg ${
               isFavorited
                 ? 'bg-gradient-to-br from-yellow-500 to-orange-500 scale-110'
                 : 'bg-black/60 backdrop-blur-sm group-hover:bg-yellow-500/30'
@@ -222,7 +235,7 @@ export default function VideoCard({ video, user, isActive }) {
             onClick={handleRepost}
             className="flex flex-col items-center gap-1 group"
           >
-            <div className={`p-3.5 rounded-full transition-smooth shadow-lg ${
+            <div className={`p-3 rounded-full sm:p-3.5 rounded-full transition-smooth shadow-lg ${
               isReposted
                 ? 'bg-gradient-to-br from-purple-500 to-pink-500 scale-110'
                 : 'bg-black/60 backdrop-blur-sm group-hover:bg-purple-500/30'
@@ -242,7 +255,7 @@ export default function VideoCard({ video, user, isActive }) {
             onClick={handleShare}
             className="flex flex-col items-center gap-1 group"
           >
-            <div className="p-3.5 rounded-full bg-black/60 backdrop-blur-sm group-hover:bg-green-500/30 transition-smooth shadow-lg">
+            <div className="p-3 rounded-full sm:p-3.5 rounded-full bg-black/60 backdrop-blur-sm group-hover:bg-green-500/30 transition-smooth shadow-lg">
               <Share2 className="w-7 h-7 text-white group-hover:text-green-400 transition-smooth" />
             </div>
             <span className="text-white text-xs font-bold drop-shadow-lg">
@@ -255,7 +268,7 @@ export default function VideoCard({ video, user, isActive }) {
             className="flex flex-col items-center gap-1 group"
             title="Создать дуэт"
           >
-            <div className="p-3.5 rounded-full bg-black/60 backdrop-blur-sm group-hover:bg-purple-500/30 transition-smooth shadow-lg">
+            <div className="p-3 rounded-full sm:p-3.5 rounded-full bg-black/60 backdrop-blur-sm group-hover:bg-purple-500/30 transition-smooth shadow-lg">
               <Users className="w-7 h-7 text-white group-hover:text-purple-400 transition-smooth" />
             </div>
             <span className="text-white text-xs font-bold drop-shadow-lg">
@@ -263,7 +276,7 @@ export default function VideoCard({ video, user, isActive }) {
             </span>
           </Link>
 
-          <button className="p-3.5 rounded-full bg-black/60 backdrop-blur-sm hover:bg-gray-700/50 transition-smooth shadow-lg">
+          <button className="p-3 rounded-full sm:p-3.5 rounded-full bg-black/60 backdrop-blur-sm hover:bg-gray-700/50 transition-smooth shadow-lg">
             <MoreVertical className="w-7 h-7 text-white" />
           </button>
         </div>

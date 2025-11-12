@@ -208,6 +208,7 @@ export default function Profile() {
                     src={video.url}
                     className="w-full h-full object-cover"
                     muted
+                    playsInline
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-smooth">
                     <div className="absolute bottom-4 left-4 right-4">

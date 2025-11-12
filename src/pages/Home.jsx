@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
 import VideoCard from '../components/VideoCard'
-import { Plus, User, Search, Bell, Heart, Home as HomeIcon, TrendingUp, Radio, MessageCircle } from 'lucide-react'
+import { Plus, User, Search, Bell, Heart, Home as HomeIcon, TrendingUp, MessageCircle } from 'lucide-react'
 import SearchModal from '../components/SearchModal'
 import NotificationsModal from '../components/NotificationsModal'
 
@@ -37,7 +37,7 @@ export default function Home() {
       {/* Header */}
       <header className="flex items-center justify-between p-4 bg-black/80 backdrop-blur-lg border-b border-pink-500/20 sticky top-0 z-50">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold gradient-text">VibeTok</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold gradient-text">VibeTok</h1>
           <Link
             to="/coming-soon"
             className="px-4 py-2   bg-green-700 font-semibold hover:from-purple-600 rounded-full transition-smooth text-sm"
@@ -53,13 +53,7 @@ export default function Home() {
           >
             <TrendingUp className="w-5 h-5 text-white group-hover:text-pink-400 transition-smooth" />
           </Link>
-          <Link
-            to="/live"
-            className="p-2.5 hover:bg-pink-500/20 rounded-full transition-smooth group"
-            title="Прямые трансляции"
-          >
-            <Radio className="w-5 h-5 text-white group-hover:text-pink-400 transition-smooth" />
-          </Link>
+          {/* Live removed per request */}
           <button
             onClick={() => setShowSearch(true)}
             className="p-2.5 hover:bg-pink-500/20 rounded-full transition-smooth group"

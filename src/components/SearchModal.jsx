@@ -90,6 +90,8 @@ export default function SearchModal({ onClose }) {
                       src={video.url}
                       className="w-full h-full object-cover"
                       muted
+                      playsInline
+                      loop
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-smooth">
                       <div className="absolute bottom-4 left-4 right-4">

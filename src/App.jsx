@@ -6,7 +6,7 @@ import Register from './pages/Register'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
 import Upload from './pages/Upload'
-import Live from './pages/Live'
+// Live page removed from routes (kept file for now)
 import Duet from './pages/Duet'
 import Messages from './pages/Messages'
 import Trending from './pages/Trending'
@@ -33,7 +33,7 @@ function AppRoutes() {
       <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
       <Route path="/profile/:userId" element={<PrivateRoute><Profile /></PrivateRoute>} />
       <Route path="/upload" element={<PrivateRoute><Upload /></PrivateRoute>} />
-      <Route path="/live" element={<PrivateRoute><Live /></PrivateRoute>} />
+  {/* Live route removed */}
       <Route path="/duet/:videoId" element={<PrivateRoute><Duet /></PrivateRoute>} />
       <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
       <Route path="/trending" element={<PrivateRoute><Trending /></PrivateRoute>} />
